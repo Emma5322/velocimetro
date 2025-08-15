@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
@@ -8,7 +8,7 @@
   :root{
     --size: 360px;
     --thickness: 24px;
-    --value: 0; /* Se actualizará por JS */
+    --value: 0;
     --color: #00f0ff;
     --bg: #0a0f1c;
   }
@@ -18,13 +18,21 @@
     background: radial-gradient(80% 80% at 50% 50%, #04070e 0%, #000 60%, #000 100%);
     font-family: 'Orbitron', system-ui, sans-serif;
     color:#dff;
+    overflow:hidden;
   }
 
   .gauge{
     --p: var(--value);
-    width: var(--size); aspect-ratio:1; position:relative; border-radius:50%;
+    width: var(--size); aspect-ratio:1; position:absolute; border-radius:50%;
     display:grid; place-items:center;
     filter: drop-shadow(0 0 18px rgba(0,240,255,.35));
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    cursor: grab;
+  }
+
+  .gauge:active {
+    cursor: grabbing;
   }
 
   /* Fondo y ticks finos */
@@ -57,7 +65,12 @@
   /* Centro y números */
   .hub{
     width: calc(var(--size) - var(--thickness)*3); aspect-ratio:1; border-radius:50%;
-    display:grid; place-items:center; position:relative; z-index:2;
+      display:flex; 
+  flex-direction: column;   /* Apila value y label verticalmente */
+  justify-content: center;  /* Centra verticalmente */
+  align-items: center;      /* Centra horizontalmente */
+  position:relative; 
+  z-index:2;
     background:
       radial-gradient(60% 60% at 50% 40%, rgba(255,255,255,.08), rgba(255,255,255,0) 60%),
       repeating-linear-gradient(135deg, #0a0f14 0 6px, #0d1218 6px 12px);
@@ -71,6 +84,7 @@
       0 0 6px rgba(0,255,255,.9),
       0 0 18px rgba(0,255,255,.7),
       0 0 36px rgba(0,255,255,.35);
+    text-align:center;  /* Centrado horizontal */
   }
 
   .label{
@@ -105,24 +119,43 @@ const maxSpeed = 240;
 const gauge = document.getElementById("gauge");
 const speedText = document.getElementById("speed");
 
+// Actualización de la barra
 function updateGauge() {
-  // Convertir velocidad a porcentaje para el arco
   const percent = (speed / maxSpeed) * 100;
   gauge.style.setProperty("--value", percent);
   speedText.textContent = Math.round(speed);
 
-  speed += 0.8; // Velocidad de simulación
+  speed += 0.8;
   if (speed > maxSpeed) speed = 0;
 
   requestAnimationFrame(updateGauge);
 }
-
 updateGauge();
+
+// Hacer el HUD movible
+let isDragging = false;
+let offsetX = 0, offsetY = 0;
+
+gauge.addEventListener("mousedown", e => {
+  isDragging = true;
+  offsetX = e.clientX - gauge.offsetLeft;
+  offsetY = e.clientY - gauge.offsetTop;
+});
+
+window.addEventListener("mousemove", e => {
+  if(!isDragging) return;
+  let x = e.clientX - offsetX;
+  let y = e.clientY - offsetY;
+  gauge.style.left = x + "px";
+  gauge.style.top = y + "px";
+});
+
+window.addEventListener("mouseup", () => {
+  isDragging = false;
+});
 </script>
 </body>
 </html>
-
-
 
 
 
