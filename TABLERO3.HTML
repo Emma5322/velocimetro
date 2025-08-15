@@ -56,7 +56,7 @@
 
   /* Zona roja final */
   .gauge .red-arc{
-    position:absolute; inset:0; border-radius:50%;
+    position:absolute; inset:0; border-radius:100%;
     background: conic-gradient(from -90deg, transparent 0 75%, #ff0033 0 100%);
     -webkit-mask: radial-gradient(farthest-side, #0000 calc(50% - var(--thickness)), #000 calc(50% - var(--thickness)));
             mask: radial-gradient(farthest-side, #0000 calc(50% - var(--thickness)), #000 calc(50% - var(--thickness)));
@@ -130,6 +130,7 @@ updateGauge();
 </script>
 </body>
 </html>
+
 
 
 
