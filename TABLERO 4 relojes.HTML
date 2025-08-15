@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Gauge Neon HUD</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --size: 360px;
+    --thickness: 24px;
+    --value: 0;
+    --color: #00f0ff;
+    --bg: #0a0f1c;
+  }
+
+  body{
+    margin:0; height:100vh; width:100vw;
+    background: radial-gradient(80% 80% at 50% 50%, #04070e 0%, #000 60%, #000 100%);
+    font-family: 'Orbitron', system-ui, sans-serif;
+    color:#dff;
+    overflow:hidden;
+    position: relative;
+  }
+
+  .gauge{
+    --p: var(--value);
+    width: var(--size); aspect-ratio:1; position:absolute; border-radius:50%;
+    display:grid; place-items:center;
+    filter: drop-shadow(0 0 18px rgba(0,240,255,.35));
+    cursor: grab;
+  }
+
+  .gauge:active {
+    cursor: grabbing;
+  }
+
+  .gauge.small { --size: 180px; }
+
+  .gauge::before{
+    content:""; position:absolute; inset:0; border-radius:50%;
+    background:
+      radial-gradient(closest-side, transparent calc(50% - var(--thickness)), rgba(0,0,0,.35) calc(50% - var(--thickness) + 1px), transparent 0 99%, transparent) ,
+      repeating-conic-gradient(from -90deg, rgba(255,255,255,.06) 0 1deg, transparent 1deg 7.5deg);
+  }
+
+  .gauge::after{
+    content:""; position:absolute; inset:0; border-radius:50%;
+    background:
+      conic-gradient(from 225deg, var(--color) calc(var(--p) * 1%), #1a2a3a 0),
+      radial-gradient(closest-side, #0b1b24, #071018);
+    box-shadow:
+      0 0 0 1px rgba(0,255,255,.25) inset,
+      0 0 30px rgba(0,255,255,.35) inset,
+      0 0 40px rgba(0,255,255,.35);
+  }
+
+  .gauge .red-arc{
+    position:absolute; inset:0; border-radius:50%;
+    background: conic-gradient(from -90deg, transparent 0 75%, #ff0033 0 100%);
+    filter: drop-shadow(0 0 12px rgba(255,0,60,.55));
+  }
+
+  .hub{
+    width: calc(var(--size) - var(--thickness)*3); aspect-ratio:1; border-radius:50%;
+    display:flex; flex-direction: column; justify-content:center; align-items:center;
+    position:relative; z-index:2;
+    background:
+      radial-gradient(60% 60% at 50% 40%, rgba(255,255,255,.08), rgba(255,255,255,0) 60%),
+      repeating-linear-gradient(135deg, #0a0f14 0 6px, #0d1218 6px 12px);
+    box-shadow: inset 0 0 35px rgba(0,0,0,.8), inset 0 0 60px rgba(0,255,255,.08);
+  }
+
+  .value{
+    font-size: clamp(36px, 10vw, 56px);
+    letter-spacing:.06em;
+    text-shadow:
+      0 0 6px rgba(0,255,255,.9),
+      0 0 18px rgba(0,255,255,.7),
+      0 0 36px rgba(0,255,255,.35);
+    text-align:center;
+  }
+
+  .gauge.small .value {
+    font-size: calc(clamp(36px, 10vw, 56px) * 0.5);
+  }
+
+   .gauge.small .hub {
+    width: 70%;  /* Más grande dentro del gauge pequeño */
+  }
+
+  .label{
+    font-size:14px; opacity:.8; margin-top:6px; letter-spacing:.3em;
+  }
+
+  .glass{
+    position:absolute; inset:0; border-radius:50%; overflow:hidden; pointer-events:none;
+  }
+  .glass::after{
+    content:""; position:absolute; left:10%; right:10%; top:8%;
+    height:28%; border-radius:50%;
+    background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0));
+    filter: blur(2px);
+  }
+</style>
+</head>
+<body>
+  <!-- Gauges grandes -->
+  <div class="gauge" id="gauge1" style="top:50px; left:50px;">
+    <span class="red-arc"></span>
+    <div class="hub">
+      <div class="value" id="speed1">0</div>
+      <div class="label">KM/H</div>
+    </div>
+    <div class="glass"></div>
+  </div>
+
+  <div class="gauge" id="gauge2" style="top:50px; right:50px;">
+    <span class="red-arc"></span>
+    <div class="hub">
+      <div class="value" id="speed2">0</div>
+      <div class="label">RPM X 1000</div>
+    </div>
+    <div class="glass"></div>
+  </div>
+
+  <!-- Gauges pequeños -->
+  <div class="gauge small" id="gauge3" style="bottom:50px; left:50px;">
+    <span class="red-arc"></span>
+    <div class="hub">
+      <div class="value" id="speed3">0</div>
+      <div class="label">BAR</div>
+    </div>
+    <div class="glass"></div>
+  </div>
+
+  <div class="gauge small" id="gauge4" style="bottom:50px; right:50px;">
+    <span class="red-arc"></span>
+    <div class="hub">
+      <div class="value" id="speed4">0</div>
+      <div class="label">TEMP</div>
+    </div>
+    <div class="glass"></div>
+  </div>
+
+<script>
+const maxSpeed = 240;
+const gauges = [
+  {el: document.getElementById("gauge1"), val: document.getElementById("speed1")},
+  {el: document.getElementById("gauge2"), val: document.getElementById("speed2")},
+  {el: document.getElementById("gauge3"), val: document.getElementById("speed3")},
+  {el: document.getElementById("gauge4"), val: document.getElementById("speed4")},
+];
+
+let speeds = [0,0,0,0];
+
+function updateGauge() {
+  gauges.forEach((g, i) => {
+    const percent = (speeds[i] / maxSpeed) * 75;
+    g.el.style.setProperty("--value", percent);
+    g.val.textContent = Math.round(speeds[i]);
+    speeds[i] += 0.8;
+    if(speeds[i] > maxSpeed) speeds[i] = 0;
+  });
+  requestAnimationFrame(updateGauge);
+}
+updateGauge();
+
+gauges.forEach(g => {
+  let isDragging = false;
+  let offsetX = 0, offsetY = 0;
+
+  g.el.addEventListener("mousedown", e => {
+    isDragging = true;
+    offsetX = e.clientX - g.el.offsetLeft;
+    offsetY = e.clientY - g.el.offsetTop;
+  });
+
+  window.addEventListener("mousemove", e => {
+    if (!isDragging) return;
+    const size = g.el.offsetWidth; // toma el ancho actual
+    g.el.style.left = (e.clientX - offsetX) + "px";
+    g.el.style.top = (e.clientY - offsetY) + "px";
+    g.el.style.height = size + "px"; // fuerza mantener la altura igual al ancho
+  });
+
+  window.addEventListener("mouseup", () => { isDragging = false; });
+});
+</script>
+</body>
+</html>
