@@ -47,7 +47,7 @@
   .gauge::after{
     content:""; position:absolute; inset:0; border-radius:50%;
     background:
-      conic-gradient(from -90deg, var(--color) calc(var(--p) * 1%), #1a2a3a 0),
+      conic-gradient(from 225deg, var(--color) calc(var(--p) * 1%), #1a2a3a 0),
       radial-gradient(closest-side, #0b1b24, #071018);
     box-shadow:
       0 0 0 1px rgba(0,255,255,.25) inset,
@@ -121,7 +121,7 @@ const speedText = document.getElementById("speed");
 
 // Actualización de la barra
 function updateGauge() {
-  const percent = (speed / maxSpeed) * 100;
+  const percent = (speed / maxSpeed) * 75;
   gauge.style.setProperty("--value", percent);
   speedText.textContent = Math.round(speed);
 
@@ -156,6 +156,7 @@ window.addEventListener("mouseup", () => {
 </script>
 </body>
 </html>
+
 
 
 
