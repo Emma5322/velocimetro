@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>HUD con Relojes y Honeyboxes</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --size: 360px;
+  --thickness: 24px;
+  --value: 0;
+  --color: #00f0ff;
+}
+
+body{
+  margin:0;
+  height:100vh;
+  background: radial-gradient(80% 80% at 50% 50%, #04070e 0%, #000 60%, #000 100%);
+  font-family: 'Orbitron', system-ui, sans-serif;
+  color:#dff;
+  overflow:hidden;
+}
+
+/* ======= GAUGE ======= */
+.gauge{
+  --p: var(--value);
+  width: var(--size);
+  aspect-ratio:1;
+  position:absolute;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  filter: drop-shadow(0 0 18px rgba(0,240,255,.35));
+  cursor: grab;
+}
+.gauge:active { cursor: grabbing; }
+
+.gauge::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  background:
+    radial-gradient(closest-side, transparent calc(50% - var(--thickness)), rgba(0,0,0,.35) calc(50% - var(--thickness) + 1px), transparent 0 99%, transparent) ,
+    repeating-conic-gradient(from -90deg, rgba(255,255,255,.06) 0 1deg, transparent 1deg 7.5deg);
+}
+
+.gauge::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  background:
+    conic-gradient(from 225deg, var(--color) calc(var(--p) * 1%), #1a2a3a 0),
+    radial-gradient(closest-side, #0b1b24, #071018);
+  box-shadow:
+    0 0 0 1px rgba(0,255,255,.25) inset,
+    0 0 30px rgba(0,255,255,.35) inset,
+    0 0 40px rgba(0,255,255,.35);
+}
+
+.gauge .red-arc{
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  background: conic-gradient(from -90deg, transparent 0 75%, #ff0033 0 100%);
+  filter: drop-shadow(0 0 12px rgba(255,0,60,.55));
+}
+
+/* ===== HUB ===== */
+.hub{
+  width: calc(var(--size) - var(--thickness)*3);
+  aspect-ratio:1;
+  border-radius:50%;
+  display:flex; 
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position:relative;
+  z-index:2;
+  background:
+    radial-gradient(60% 60% at 50% 40%, rgba(255,255,255,.08), rgba(255,255,255,0) 60%),
+    repeating-linear-gradient(135deg, #0a0f14 0 6px, #0d1218 6px 12px);
+  box-shadow: inset 0 0 35px rgba(0,0,0,.8), inset 0 0 60px rgba(0,255,255,.08);
+}
+
+.value{
+  font-size: clamp(36px, 10vw, 56px);
+  letter-spacing:.06em;
+  text-shadow:
+    0 0 6px rgba(0,255,255,.9),
+    0 0 18px rgba(0,255,255,.7),
+    0 0 36px rgba(0,255,255,.35);
+}
+
+.label{
+  font-size:14px;
+  opacity:.8;
+  margin-top:6px;
+  letter-spacing:.3em;
+}
+
+.glass{
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  overflow:hidden;
+  pointer-events:none;
+}
+.glass::after{
+  content:"";
+  position:absolute;
+  left:10%; right:10%; top:8%;
+  height:28%;
+  border-radius:50%;
+  background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0));
+  filter: blur(2px);
+}
+
+/* ===== HONEYBOX ===== */
+.honeybox {
+  width: 100px; 
+  height: 86.6px;
+  background:
+    radial-gradient(60% 60% at 50% 40%, rgba(0,255,255,.05), rgba(0,0,0,.3) 70%),
+    repeating-linear-gradient(135deg, #0a0f14 0 6px, #0d1218 6px 12px);
+  clip-path: polygon(
+    50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%
+  );
+  position:absolute;
+  display:flex; 
+  justify-content:center; 
+  align-items:center;
+  font-size:32px; 
+  color:#0ff;
+  cursor: grab;
+  transition: transform 0.2s;
+}
+.honeybox:active { cursor: grabbing; }
+
+.honeybox::before {
+  content:"";
+  position:absolute; 
+  inset:0;
+  clip-path: inherit;
+  background: transparent;
+  border: 2px solid rgba(0,255,255,.9);
+  box-shadow:
+    0 0 8px rgba(0,255,255,.9),
+    0 0 20px rgba(0,255,255,.7),
+    0 0 30px rgba(0,255,255,.4),
+    inset 0 0 8px rgba(0,255,255,.8),
+    inset 0 0 20px rgba(0,255,255,.4);
+  -webkit-clip-path: inherit;
+  pointer-events: none;
+}
+
+/* ===== Tamaños pequeños ===== */
+.gauge.small {
+  --size: 180px;
+}
+.gauge.small .value {
+  font-size: clamp(18px, 5vw, 28px);
+}
+.gauge.small .hub {
+  width: calc(var(--size) - var(--thickness)*2);
+}
+</style>
+</head>
+<body>
+
+<!-- Relojes -->
+<div class="gauge" id="gauge1" style="top:50px; left:50px;">
+  <span class="red-arc"></span>
+  <div class="hub">
+    <div class="value" id="speed1">0</div>
+    <div class="label">KM/H</div>
+  </div>
+  <div class="glass"></div>
+</div>
+
+<div class="gauge" id="gauge2" style="top:50px; left:500px;">
+  <span class="red-arc"></span>
+  <div class="hub">
+    <div class="value" id="speed2">0</div>
+    <div class="label">RPM</div>
+  </div>
+  <div class="glass"></div>
+</div>
+
+<div class="gauge small" id="gauge3" style="top:450px; left:50px;">
+  <span class="red-arc"></span>
+  <div class="hub">
+    <div class="value" id="speed3">0</div>
+    <div class="label">TEMP</div>
+  </div>
+  <div class="glass"></div>
+</div>
+
+<div class="gauge small" id="gauge4" style="top:450px; left:300px;">
+  <span class="red-arc"></span>
+  <div class="hub">
+    <div class="value" id="speed4">0</div>
+    <div class="label">FUEL</div>
+  </div>
+  <div class="glass"></div>
+</div>
+
+<!-- Honeyboxes -->
+<div class="honeybox" id="honey1" style="top:200px; left:900px;">🔋</div>
+<div class="honeybox" id="honey2" style="top:300px; left:970px;">💡</div>
+<div class="honeybox" id="honey3" style="top:400px; left:900px;">⚙️</div>
+
+<script>
+function makeGauge(id, maxSpeed) {
+  let speed = 0;
+  const gauge = document.getElementById(id);
+  const speedText = gauge.querySelector(".value");
+
+  function update() {
+    const percent = (speed / maxSpeed) * 75;
+    gauge.style.setProperty("--value", percent);
+    speedText.textContent = Math.round(speed);
+    speed += 0.8;
+    if (speed > maxSpeed) speed = 0;
+    requestAnimationFrame(update);
+  }
+  update();
+
+  // Drag
+  let isDragging = false, offsetX = 0, offsetY = 0;
+  gauge.addEventListener("mousedown", e => {
+    isDragging = true;
+    offsetX = e.clientX - gauge.offsetLeft;
+    offsetY = e.clientY - gauge.offsetTop;
+  });
+  window.addEventListener("mousemove", e => {
+    if(!isDragging) return;
+    gauge.style.left = (e.clientX - offsetX) + "px";
+    gauge.style.top = (e.clientY - offsetY) + "px";
+  });
+  window.addEventListener("mouseup", () => { isDragging = false; });
+}
+
+makeGauge("gauge1", 240);
+makeGauge("gauge2", 8000);
+makeGauge("gauge3", 120);
+makeGauge("gauge4", 100);
+
+function makeHoneybox(id) {
+  const honey = document.getElementById(id);
+  let isDragging = false, offsetX = 0, offsetY = 0;
+  honey.addEventListener("mousedown", e => {
+    isDragging = true;
+    offsetX = e.clientX - honey.offsetLeft;
+    offsetY = e.clientY - honey.offsetTop;
+  });
+  window.addEventListener("mousemove", e => {
+    if(!isDragging) return;
+    honey.style.left = (e.clientX - offsetX) + "px";
+    honey.style.top = (e.clientY - offsetY) + "px";
+  });
+  window.addEventListener("mouseup", () => { isDragging = false; });
+}
+
+makeHoneybox("honey1");
+makeHoneybox("honey2");
+makeHoneybox("honey3");
+</script>
+</body>
+</html>
+
