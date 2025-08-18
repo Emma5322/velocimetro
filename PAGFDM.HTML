@@ -201,6 +201,14 @@
 .card:fullscreen .exit-btn {
   display: block; /* solo aparece en fullscreen */
 }
+
+.card:fullscreen .gauge {
+  position: relative !important;  /* anula absolute */
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;     /* elimina offsets */
+  margin: auto;
+}
    
   </style>
 </head>
@@ -608,4 +616,5 @@ btnExit.addEventListener("click", async () => {
   </script>
 </body>
 </html>
+
 
