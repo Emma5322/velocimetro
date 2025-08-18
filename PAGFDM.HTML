@@ -171,6 +171,36 @@
     background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0));
     filter: blur(2px);
   }
+
+  .card:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  padding: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+  .exit-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 26px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: none; /* oculto normalmente */
+  z-index: 9999;
+}
+
+.card:fullscreen .exit-btn {
+  display: block; /* solo aparece en fullscreen */
+}
    
   </style>
 </head>
@@ -330,6 +360,7 @@
     </div>
     <div class="glass"></div>
   </div>
+    <button id="btnExit" class="exit-btn">✕</button>
       </div>
       <button id="btnFullscreen" class="btn">Pantalla Completa</button>
     </section>
@@ -549,25 +580,29 @@ const card = document.getElementById("dashboardCard");
 document.querySelectorAll(".gauge").forEach(g => makeDraggable(g, card));
 
 
+const btnFullscreen = document.getElementById("btnFullscreen");
+const btnExit = document.getElementById("btnExit");
 
-document.getElementById("btnFullscreen").addEventListener("click", async () => {
-  const card = document.getElementById("dashboardCard");
-
+// Activar fullscreen
+btnFullscreen.addEventListener("click", async () => {
   if (!document.fullscreenElement) {
-    await card.requestFullscreen();   // Pone la card en fullscreen
-    // Intentar girar a landscape
+    await card.requestFullscreen();
     if (screen.orientation && screen.orientation.lock) {
       try {
         await screen.orientation.lock("landscape");
       } catch (err) {
-        console.warn("No se pudo bloquear la orientación:", err);
+        console.warn("No se pudo bloquear orientación:", err);
       }
     }
-  } else {
-    await document.exitFullscreen();
   }
 });
 
+// Salir con la X
+btnExit.addEventListener("click", async () => {
+  if (document.fullscreenElement) {
+    await document.exitFullscreen();
+  }
+});
 
 
   </script>
