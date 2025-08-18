@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FDM Racing Configuración</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0D0D0D;        /* fondo general */
+      --panel:#1C1C1C;     /* paneles/side */
+      --txt:#F5F5F5;       /* texto */
+      --accent:#D72638;    /* rojo */
+      --accent-dark:#A61E2C;
+      --size: 360px;
+      --thickness: 24px;
+      --value: 0;
+      --color: #00f0ff;
+      --bg: #0a0f1c;
+  
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:"Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background:var(--bg);
+      color:var(--txt);
+    }
+    /* Header fijo (siempre arriba del sidebar) */
+    header {
+      position: relative;
+      display: flex;
+      justify-content: center; /* centra el logo */
+      align-items: center;
+      height: 60px;
+      background: #111;
+      color: #fff;
+      font-size: 24px;
+      }
+       .menu-btn {
+  position: absolute;
+  left: 15px;   /* siempre a la izquierda */
+  font-size: 26px;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+.logo {
+  font-weight: bold;
+  text-align: center;
+}
+
+    /* Sidebar (no tapa al logo: z-index menor que header) */
+    .sidebar{
+      height:100%; width:0; position:fixed; top:0; left:0; z-index:1;
+      background:var(--panel); overflow-x:hidden; transition:.5s; padding-top:80px;
+      box-shadow:2px 0 8px rgba(0,0,0,.7);
+    }
+    .sidebar .closebtn{position:absolute; top:5px; right:20px; font-size:32px; color:var(--txt); cursor:pointer; transition:color .3s, text-shadow .3s;}
+    .sidebar .closebtn:hover{color:var(--accent); text-shadow:0 0 8px rgba(215,38,56,.7);}    
+    .sidebar a{display:block; padding:12px 24px; color:var(--txt); text-decoration:none; font-size:18px; transition:.3s;}
+    .sidebar a:hover{background:var(--accent-dark); box-shadow:inset 0 0 10px rgba(215,38,56,.6);}    
+
+    /* Contenido */
+    .content{padding:24px; max-width:1200px; margin:0 auto;}
+    .card{position: relative; background:var(--panel); border-radius:12px; padding:20px; box-shadow:0 4px 15px rgba(0,0,0,.8);} 
+    .card h2{margin:0 0 10px; color:var(--accent);}    
+
+    /* Vistas / secciones SPA */
+    .view{display:none;}
+    .view.active{display:block;}
+
+    /* Controles y layout */
+    .row{display:flex; flex-wrap:wrap; gap:16px;}
+    .col{flex:1 1 280px;}
+    label{display:block; font-size:14px; margin-bottom:6px; color:#ddd}
+    input[type="number"], input[type="text"], input[type="range"], input[type="color"], select{width:100%;}
+    input[type="number"], input[type="text"], select{background:#111; color:var(--txt); border:1px solid #333; border-radius:6px; padding:8px;}
+    input[type="range"]{accent-color:var(--accent);} 
+    .btn{background:var(--accent); color:#fff; border:none; border-radius:6px; padding:10px 16px; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,.6);}
+    .btn:hover{background:var(--accent-dark);}    
+
+    /* Canvas LED */
+    .led-wrap{display:flex; flex-direction:column; gap:14px}
+    .canvas-box{background:#111; border-radius:10px; padding:14px; box-shadow:0 2px 8px rgba(0,0,0,.6);}    
+
+    @media (max-width:720px){
+      .content{padding:16px}
+    }
+
+ .gauge{
+    --p: var(--value);
+    width: var(--size); aspect-ratio:1; border-radius:50%;
+    display:grid; place-items:center;
+    filter: drop-shadow(0 0 18px rgba(0,240,255,.35));
+    top: 50%; left: 50%;
+  
+    position: relative; /* ahora los podemos mover */
+    cursor: grab;
+  }
+
+  .gauge:active {
+    cursor: grabbing;
+  }
+
+  /* Fondo y ticks finos */
+  .gauge::before{
+    content:""; position:absolute; inset:0; border-radius:50%;
+    background:
+      radial-gradient(closest-side, transparent calc(50% - var(--thickness)), rgba(0,0,0,.35) calc(50% - var(--thickness) + 1px), transparent 0 99%, transparent) ,
+      repeating-conic-gradient(from -90deg, rgba(255,255,255,.06) 0 1deg, transparent 1deg 7.5deg);
+  }
+
+  /* Progreso */
+  .gauge::after{
+    content:""; position:absolute; inset:0; border-radius:50%;
+    background:
+      conic-gradient(from 225deg, var(--color) calc(var(--p) * 1%), #1a2a3a 0),
+      radial-gradient(closest-side, #0b1b24, #071018);
+    box-shadow:
+      0 0 0 1px rgba(0,255,255,.25) inset,
+      0 0 30px rgba(0,255,255,.35) inset,
+      0 0 40px rgba(0,255,255,.35);
+  }
+
+  /* Zona roja final */
+  .gauge .red-arc{
+    position:absolute; inset:0; border-radius:50%;
+    background: conic-gradient(from -90deg, transparent 0 75%, #ff0033 0 100%);
+    filter: drop-shadow(0 0 12px rgba(255,0,60,.55));
+  }
+
+  /* Centro y números */
+  .hub{
+    width: calc(var(--size) - var(--thickness)*3); aspect-ratio:1; border-radius:50%;
+      display:flex; 
+  flex-direction: column;   /* Apila value y label verticalmente */
+  justify-content: center;  /* Centra verticalmente */
+  align-items: center;      /* Centra horizontalmente */
+  position:absolute; 
+  z-index:2;
+    background:
+      radial-gradient(60% 60% at 50% 40%, rgba(255,255,255,.08), rgba(255,255,255,0) 60%),
+      repeating-linear-gradient(135deg, #0a0f14 0 6px, #0d1218 6px 12px);
+    box-shadow: inset 0 0 35px rgba(0,0,0,.8), inset 0 0 60px rgba(0,255,255,.08);
+  }
+
+  .value{
+    font-size: clamp(36px, 10vw, 56px);
+    letter-spacing:.06em;
+    text-shadow:
+      0 0 6px rgba(0,255,255,.9),
+      0 0 18px rgba(0,255,255,.7),
+      0 0 36px rgba(0,255,255,.35);
+    text-align:center;  /* Centrado horizontal */
+  }
+
+  .label{
+    font-size:14px; opacity:.8; margin-top:6px; letter-spacing:.3em;
+  }
+
+  /* Reflejo */
+  .glass{
+    position:absolute; inset:0; border-radius:50%; overflow:hidden; pointer-events:none;
+  }
+  .glass::after{
+    content:""; position:absolute; left:10%; right:10%; top:8%;
+    height:28%; border-radius:50%;
+    background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0));
+    filter: blur(2px);
+  }
+   
+  </style>
+</head>
+<body>
+  <header>
+    <button class="menu-btn" onclick="openNav()" aria-label="Abrir menú">&#9776;</button>
+    <div class="logo">FDM Racing</div>
+  </header>
+
+  <nav id="mySidebar" class="sidebar" aria-label="Navegación lateral">
+    <span class="closebtn" onclick="closeNav()" aria-label="Cerrar menú">&times;</span>
+    <a href="#" data-section="general"><i class="fa-solid fa-car"></i>  Configuración General</a>
+    <a href="#" data-section="motor"><i class="fa-solid fa-gears"></i> Parámetros del Motor</a>
+    <a href="#" data-section="rpm"><i class="fas fa-tachometer-alt"></i> Límite de RPM</a>
+    <a href="#" data-section="dashboard"><i class="fa-solid fa-gauge-simple"></i> Dashboard</a>
+    <a href="#" data-section="estadisticas"><i class="fas fa-chart-line"></i> Estadisticas</a>
+    <a href="#" data-section="informacion"><i class="fas fa-info-circle"></i> Información</a>
+  </nav>
+
+  <main class="content">
+    <!-- GENERAL -->
+    <section id="view-general" class="view active">
+      <div class="card">
+        <h2>Configuración General</h2>
+        <div class="row">
+            <div class="col">
+            <label for="idleMarca">Marca</label>
+            <input id="idleMarca" type="text" value="">
+          </div>
+            <div class="col">
+            <label for="idleMod">Modelo</label>
+            <input id="idleMod" type="text" value="">
+          </div>
+            <div class="col">
+            <label for="idleKm">Kilometraje </label>
+            <input id="idlekm" type="number" min="100" max="300" step="1" value="100">
+          </div>
+            <div class="col">
+            <label for="idleVel">Velocidad máxima (Km/h) </label>
+            <input id="idleVel" type="number" min="100" max="300" step="1" value="100">
+          </div>
+        </div>
+        <div style="margin-top:12px"><button class="btn">Guardar</button></div>
+      </div>
+    </section>
+
+    <!-- MOTOR -->
+    <section id="view-motor" class="view">
+      <div class="card">
+        <h2>Parámetros del Motor</h2>
+        <div class="row">
+          <div class="col">
+            <label for="idleCil">Cantidad de cilindros</label>
+            <input id="idleCil" type="number" min="3" max="8" step="1" value="4">
+          </div>
+            <div class="col">
+              <label for="idleTipo">Tipo</label>
+                <select id="idleTipo" name="tipo">
+                <option value="opcion1">Aspirado</option>
+                <option value="opcion2">Turbo</option>
+              </select>
+            </div>
+          <div class="col">
+            <label for="idlePres">Presión máxima (Psi) </label>
+            <input id="idlePres" type="number" min="3" max="8" step="1" value="4">
+          </div>
+          <div class="col">
+            <label for="idleTemp">Temperatura máxima (C) </label>
+            <input id="idleTemp" type="number" min="3" max="8" step="1" value="4">
+          </div>
+          <div class="col">
+            <label for="idleRpm">Ralenti (RPM)</label>
+            <input id="idleRpm" type="number" min="500" max="2000" step="50" value="900">
+          </div>
+          <div class="col">
+            <label for="maxRpm">RPM Máximas</label>
+            <input id="maxRpm" type="number" min="4000" max="12000" step="100" value="10000">
+          </div>
+        </div>
+        <div style="margin-top:12px"><button class="btn">Guardar</button></div>
+      </div>
+    </section>
+
+    <!-- LIMITE RPM (LEDs + Slider + lógica) -->
+    <section id="view-rpm" class="view">
+      <div class="card">
+        <h2>Límite de RPM – Simulación LEDs</h2>
+        <div class="row">
+          <div class="col">
+            <label for="ledCount">Cantidad de LEDs</label>
+            <input id="ledCount" type="number" min="1" max="60" value="8">
+          </div>
+          <div class="col">
+            <label for="yellowStart">Inicio Amarillo (% de escala)</label>
+            <input id="yellowStart" type="number" min="0" max="100" value="55">
+          </div>
+          <div class="col">
+            <label for="redStart">Inicio Rojo (% de escala)</label>
+            <input id="redStart" type="number" min="0" max="100" value="80">
+          </div>
+          <div class="col">
+            <label for="limitRpm">Límite (RPM)</label>
+            <input id="limitRpm" type="number" min="3000" max="12000" step="100" value="9500">
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <div class="col">
+            <label for="colorGreen">Color Verde</label>
+            <input id="colorGreen" type="color" value="#00ff66">
+          </div>
+          <div class="col">
+            <label for="colorYellow">Color Amarillo</label>
+            <input id="colorYellow" type="color" value="#ffff33">
+          </div>
+          <div class="col">
+            <label for="colorRed">Color Rojo</label>
+            <input id="colorRed" type="color" value="#ff1a1a">
+          </div>
+          <div class="col">
+            <label for="colorBg">Fondo LED</label>
+            <input id="colorBg" type="color" value="#202020">
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:14px; align-items:center">
+          <div class="col">
+            <label for="rpmSlider">RPM actuales</label>
+            <input id="rpmSlider" type="range" min="0" max="12000" step="50" value="0">
+            <div id="rpmLabel" style="margin-top:6px; color:#ccc">0 RPM</div>
+          </div>
+          <div class="col" style="align-self:flex-end">
+            <button class="btn" id="btnDemo">Demo Auto</button>
+            <button class="btn" id="btnReset" style="margin-left:8px">Reset</button>
+          </div>
+        </div>
+
+        <div class="led-wrap" style="margin-top:16px">
+          <div class="canvas-box">
+            <canvas id="ledCanvas" width="900" height="90" aria-label="Simulación barra de LEDs"></canvas>
+          </div>
+        </div>
+        <p style="margin-top:10px; color:#bbb; font-size:13px">Cuando las RPM superan el límite, todos los LEDs parpadean en <b style="color:#5ecbff">azul</b>.</p>
+      <div style="margin-top:12px"><button class="btn">Guardar</button></div>
+      </div>
+      
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="view-dashboard" class="view">
+      <div class="card" id="dashboardCard">
+  <div class="gauge" id="gauge">
+    <span class="red-arc"></span>
+    <div class="hub">
+      <div class="value" id="speed">0</div>
+      <div class="label">KM/H</div>
+    </div>
+    <div class="glass"></div>
+  </div>
+      </div>
+      <button id="btnFullscreen" class="btn">Pantalla Completa</button>
+    </section>
+
+    <!-- ESTADISTICAS -->
+    <section id="view-estadisticas" class="view">
+      <div class="card">
+        <h2>Pruebas</h2>
+        <p>Herramientas de testeo y diagnóstico.</p>
+      </div>
+    </section>
+
+        <!-- INFORMACION -->
+    <section id="view-informacion" class="view">
+      <div class="card">
+        <h2>Pruebas</h2>
+        <p>Herramientas de testeo y diagnóstico.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // --- Sidebar open/close ---
+    function openNav(){ document.getElementById('mySidebar').style.width = '260px'; }
+    function closeNav(){ document.getElementById('mySidebar').style.width = '0'; }
+
+    // --- Navegación por secciones ---
+    const links = document.querySelectorAll('#mySidebar a[data-section]');
+    const views = {
+      general: document.getElementById('view-general'),
+      motor: document.getElementById('view-motor'),
+      rpm: document.getElementById('view-rpm'),
+      dashboard: document.getElementById('view-dashboard'),
+      estadisticas: document.getElementById('view-estadisticas'),
+      informacion: document.getElementById('view-informacion'),
+    };
+    links.forEach(a=>{
+      a.addEventListener('click', e=>{
+        e.preventDefault();
+        const target = a.getAttribute('data-section');
+        Object.values(views).forEach(v=>v.classList.remove('active'));
+        views[target].classList.add('active');
+        closeNav();
+      });
+    });
+
+    // --- Simulación LEDs en Canvas ---
+    const canvas = document.getElementById('ledCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Controles
+    const rpmSlider = document.getElementById('rpmSlider');
+    const rpmLabel  = document.getElementById('rpmLabel');
+    const ledCount  = document.getElementById('ledCount');
+    const yellowStart = document.getElementById('yellowStart');
+    const redStart    = document.getElementById('redStart');
+    const limitRpm    = document.getElementById('limitRpm');
+    const colorGreen  = document.getElementById('colorGreen');
+    const colorYellow = document.getElementById('colorYellow');
+    const colorRed    = document.getElementById('colorRed');
+    const colorBg     = document.getElementById('colorBg');
+    const btnDemo     = document.getElementById('btnDemo');
+    const btnReset    = document.getElementById('btnReset');
+
+    let demoTimer = null;
+    let flashPhase = 0; // para parpadeo en sobre-límite
+
+    function hexToRgb(hex){
+      const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex);
+      return m? {r:parseInt(m[1],16), g:parseInt(m[2],16), b:parseInt(m[3],16)} : {r:255,g:255,b:255};
+    }
+    function rgbStr({r,g,b}, a=1){ return `rgba(${r},${g},${b},${a})`; }
+
+    function drawLEDs(){
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0,0,W,H);
+
+      const n = Math.max(8, Math.min(60, parseInt(ledCount.value||20)));
+      const margin = 12; // márgenes laterales
+      const gap = 8;     // espacio entre leds
+      const availableW = W - margin*2 - gap*(n-1);
+      const ledW = Math.max(10, availableW / n);
+      const ledH = 36;   // alto fijo
+      const x0 = margin; const y0 = (H-ledH)/2;
+
+      // Escala actual (0..1) por RPM
+      const rpm = parseInt(rpmSlider.value||0);
+      const maxRpm = 12000; // escala del slider
+      const frac = Math.max(0, Math.min(1, rpm / maxRpm));
+
+      // Zonas (porcentaje de escala)
+      const yStart = Math.min(100, Math.max(0, parseFloat(yellowStart.value||55)))/100;
+      const rStart = Math.min(100, Math.max(0, parseFloat(redStart.value||80)))/100;
+
+      // Colores
+      const cG = hexToRgb(colorGreen.value);
+      const cY = hexToRgb(colorYellow.value);
+      const cR = hexToRgb(colorRed.value);
+      const cBg = hexToRgb(colorBg.value);
+
+      // ¿Sobre límite?
+      const overLimit = rpm > parseInt(limitRpm.value||9500);
+      if(overLimit){ flashPhase = (flashPhase + 1) % 60; } else { flashPhase = 0; }
+
+      // dibujar cada LED
+      const litCount = Math.round(n * frac);
+      for(let i=0;i<n;i++){
+        const x = x0 + i*(ledW+gap);
+        const y = y0;
+        // fondo (apagado)
+        ctx.fillStyle = rgbStr(cBg, 0.25);
+        roundRect(ctx, x, y, ledW, ledH, 6, true, false);
+
+        // encendido
+        let on = i < litCount;
+        if(overLimit){
+          // Parpadeo azul sincronizado
+          const alpha = (flashPhase < 30) ? 1 : 0.15;
+          ctx.fillStyle = `rgba(94,203,255,${alpha})`;
+          roundRect(ctx, x, y, ledW, ledH, 6, true, false);
+          continue;
+        }
+        if(on){
+          const ratio = i / n;
+          let c = cG;
+          if(ratio >= rStart) c = cR; else if(ratio >= yStart) c = cY;
+          ctx.fillStyle = rgbStr(c, 0.95);
+          roundRect(ctx, x, y, ledW, ledH, 6, true, false);
+        }
+      }
+
+      // Texto RPM
+      ctx.fillStyle = 'rgba(255,255,255,.8)';
+      ctx.font = '14px Segoe UI, sans-serif';
+      ctx.fillText(`${rpm} RPM`, W-90, 22);
+      rpmLabel.textContent = `${rpm} RPM`;
+    }
+
+    function roundRect(ctx, x, y, w, h, r, fill, stroke){
+      if (w < 2*r) r = w/2; if (h < 2*r) r = h/2;
+      ctx.beginPath();
+      ctx.moveTo(x+r, y);
+      ctx.arcTo(x+w, y,   x+w, y+h, r);
+      ctx.arcTo(x+w, y+h, x,   y+h, r);
+      ctx.arcTo(x,   y+h, x,   y,   r);
+      ctx.arcTo(x,   y,   x+w, y,   r);
+      ctx.closePath();
+      if(fill) ctx.fill();
+      if(stroke) ctx.stroke();
+    }
+
+    // Eventos
+    [rpmSlider, ledCount, yellowStart, redStart, limitRpm, colorGreen, colorYellow, colorRed, colorBg]
+      .forEach(el=> el.addEventListener('input', drawLEDs));
+
+    // Demo automática (acelera y desacelera)
+    btnDemo.addEventListener('click', ()=>{
+      if(demoTimer){ clearInterval(demoTimer); demoTimer=null; btnDemo.textContent='Demo Auto'; return; }
+      btnDemo.textContent='Detener Demo';
+      let dir = 1;
+      demoTimer = setInterval(()=>{
+        let v = parseInt(rpmSlider.value);
+        v += dir*250;
+        if(v >= 12000){ v = 12000; dir = -1; }
+        if(v <= 0){ v = 0; dir = 1; }
+        rpmSlider.value = v;
+        drawLEDs();
+      }, 80);
+    });
+
+    btnReset.addEventListener('click', ()=>{
+      rpmSlider.value = 0; drawLEDs();
+    });
+
+    // Animación de parpadeo cuando está sobre el límite
+    function loop(){ drawLEDs(); requestAnimationFrame(loop); }
+    loop();
+
+    // Render inicial
+    drawLEDs();
+
+function makeDraggable(el, container) {
+  let offsetX, offsetY, isDragging = false;
+
+  el.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    const rect = el.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+    el.style.zIndex = 10;
+  });
+
+  window.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    const containerRect = container.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+
+    // calcular nueva posición
+    let x = e.clientX - containerRect.left - offsetX;
+    let y = e.clientY - containerRect.top - offsetY;
+
+    // limitar dentro del card
+    x = Math.max(0, Math.min(x, container.clientWidth - el.offsetWidth));
+    y = Math.max(0, Math.min(y, container.clientHeight - el.offsetHeight));
+
+    el.style.left = x + "px";
+    el.style.top = y + "px";
+  });
+
+  window.addEventListener("mouseup", () => {
+    isDragging = false;
+    el.style.zIndex = "";
+  });
+}
+
+const card = document.getElementById("dashboardCard");
+document.querySelectorAll(".gauge").forEach(g => makeDraggable(g, card));
+
+
+
+document.getElementById("btnFullscreen").addEventListener("click", async () => {
+  const card = document.getElementById("dashboardCard");
+
+  if (!document.fullscreenElement) {
+    await card.requestFullscreen();   // Pone la card en fullscreen
+    // Intentar girar a landscape
+    if (screen.orientation && screen.orientation.lock) {
+      try {
+        await screen.orientation.lock("landscape");
+      } catch (err) {
+        console.warn("No se pudo bloquear la orientación:", err);
+      }
+    }
+  } else {
+    await document.exitFullscreen();
+  }
+});
+
+
+
+  </script>
+</body>
+</html>
