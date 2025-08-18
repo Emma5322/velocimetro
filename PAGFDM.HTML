@@ -360,10 +360,10 @@
     <!-- DASHBOARD -->
     <section id="view-dashboard" class="view">
       <div class="card" id="dashboardCard">
-  <div class="gauge" id="gauge">
+  <div class="gauge" id="gauge1">
     <span class="red-arc"></span>
     <div class="hub">
-      <div class="value" id="speed">0</div>
+      <div class="value" id="speed1">0</div>
       <div class="label">KM/H</div>
     </div>
     <div class="glass"></div>
@@ -627,10 +627,53 @@ btnExit.addEventListener("click", async () => {
   }
 });
 
+const maxSpeed = 240;
+const gauges = [
+  {el: document.getElementById("gauge1"), val: document.getElementById("speed1")},
+  {el: document.getElementById("gauge2"), val: document.getElementById("speed2")},
+];
+
+let speeds = [0,0];
+
+function updateGauge() {
+  gauges.forEach((g, i) => {
+    const percent = (speeds[i] / maxSpeed) * 75;
+    g.el.style.setProperty("--value", percent);
+    g.val.textContent = Math.round(speeds[i]);
+    speeds[i] += 0.8;
+    if(speeds[i] > maxSpeed) speeds[i] = 0;
+  });
+  requestAnimationFrame(updateGauge);
+}
+updateGauge();
+
+gauges.forEach(g => {
+  let isDragging = false;
+  let offsetX = 0, offsetY = 0;
+
+  g.el.addEventListener("mousedown", e => {
+    isDragging = true;
+    offsetX = e.clientX - g.el.offsetLeft;
+    offsetY = e.clientY - g.el.offsetTop;
+  });
+
+  window.addEventListener("mousemove", e => {
+    if (!isDragging) return;
+    const size = g.el.offsetWidth; // toma el ancho actual
+    g.el.style.left = (e.clientX - offsetX) + "px";
+    g.el.style.top = (e.clientY - offsetY) + "px";
+    g.el.style.height = size + "px"; // fuerza mantener la altura igual al ancho
+  });
+
+  window.addEventListener("mouseup", () => { isDragging = false; });
+});
+
+
 
   </script>
 </body>
 </html>
+
 
 
 
